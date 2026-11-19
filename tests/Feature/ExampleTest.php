@@ -2,11 +2,16 @@
 
 namespace Tests\Feature;
 
-// use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 class ExampleTest extends TestCase
 {
+    use RefreshDatabase;
+
+    // run DatabaseSeeder before each test, so the home page has data to show
+    protected $seed = true;
+
     /**
      * A basic test example.
      */
