@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Permit extends Model
 {
@@ -17,5 +18,10 @@ class Permit extends Model
         return [
             'expires_on' => 'date',
         ];
+    }
+
+    public function eatery(): BelongsTo
+    {
+        return $this->belongsTo(Eatery::class);
     }
 }
