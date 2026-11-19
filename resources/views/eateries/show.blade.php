@@ -73,10 +73,60 @@
         @endforelse
     </ul>
 
-    {{-- Review form (built in the next phase) --}}
+    {{-- Review form, only for open eateries --}}
     <div class="mb-8">
         @if ($eatery->is_open)
-            {{-- review form goes here --}}
+            <h2 class="mb-3 text-xl font-semibold">Write a Review</h2>
+
+            <form method="POST" action="{{ route('eateries.reviews.store', $eatery) }}" class="space-y-4 rounded-lg border border-stone-200 bg-white p-4">
+                @csrf
+
+                @if ($errors->any())
+                    <div class="rounded border border-red-300 bg-red-50 px-4 py-3 text-red-800">
+                        <p class="font-semibold">Please fix the following:</p>
+                        <ul class="mt-1 list-disc pl-5 text-sm">
+                            @foreach ($errors->all() as $error)
+                                <li>{{ $error }}</li>
+                            @endforeach
+                        </ul>
+                    </div>
+                @endif
+
+                <div>
+                    <label for="user_id" class="mb-1 block font-medium">Reviewer</label>
+                    <select id="user_id" name="user_id" class="w-full rounded border border-stone-300 px-3 py-2">
+                        <option value="">Choose reviewer</option>
+                        @foreach ($users as $user)
+                            <option value="{{ $user->id }}" @selected(old('user_id') == $user->id)>{{ $user->name }}</option>
+                        @endforeach
+                    </select>
+                    @error('user_id')
+                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                <div>
+                    <label for="rating" class="mb-1 block font-medium">Rating</label>
+                    <select id="rating" name="rating" class="w-full rounded border border-stone-300 px-3 py-2">
+                        @for ($i = 1; $i <= 5; $i++)
+                            <option value="{{ $i }}" @selected(old('rating') == $i)>{{ $i }} {{ $i == 1 ? 'star' : 'stars' }}</option>
+                        @endfor
+                    </select>
+                    @error('rating')
+                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                <div>
+                    <label for="body" class="mb-1 block font-medium">Review</label>
+                    <textarea id="body" name="body" rows="4" class="w-full rounded border border-stone-300 px-3 py-2">{{ old('body') }}</textarea>
+                    @error('body')
+                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                <button type="submit" class="rounded bg-orange-600 px-4 py-2 font-medium text-white hover:bg-orange-700">Post Review</button>
+            </form>
         @else
             <p class="rounded border border-stone-200 bg-stone-100 p-4 text-stone-600">This eatery is closed. Reviews are paused.</p>
         @endif
