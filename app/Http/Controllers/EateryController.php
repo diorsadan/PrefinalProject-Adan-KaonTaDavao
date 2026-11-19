@@ -2,7 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\District;
 use App\Models\Eatery;
+use App\Models\Feature;
+use App\Models\User;
 use Illuminate\Http\Request;
 
 class EateryController extends Controller
@@ -10,16 +13,34 @@ class EateryController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        // load everything the card needs here, so the card never runs a query
         $eateries = Eatery::with(['district', 'features'])
             ->withCount('reviews')
             ->withAvg('reviews', 'rating')
+            // search name OR specialty, grouped so it combines correctly with the other filters
+            ->when($request->input('q'), function ($query, $q) {
+                $query->where(function ($query) use ($q) {
+                    $query->where('name', 'like', '%'.$q.'%')
+                        ->orWhere('specialty', 'like', '%'.$q.'%');
+                });
+            })
+            ->when($request->input('district'), function ($query, $districtId) {
+                $query->where('district_id', $districtId);
+            })
+            ->when($request->input('feature'), function ($query, $featureName) {
+                $query->whereHas('features', function ($query) use ($featureName) {
+                    $query->where('name', $featureName);
+                });
+            })
             ->orderBy('name')
-            ->get();
+            ->paginate(6)
+            ->withQueryString(); // keep the filters in the pagination links
 
-        return view('eateries.index', compact('eateries'));
+        $districts = District::orderBy('name')->get();
+        $features = Feature::orderBy('name')->get();
+
+        return view('eateries.index', compact('eateries', 'districts', 'features'));
     }
 
     /**
@@ -43,11 +64,18 @@ class EateryController extends Controller
      */
     public function show(Eatery $eatery)
     {
-        $eatery->load(['district', 'features', 'permit', 'dishes', 'reviews.user'])
-            ->loadCount('reviews')
-            ->loadAvg('reviews', 'rating');
+        $eatery->load([
+            'district',
+            'features',
+            'permit',
+            'dishes',
+            'reviews' => fn ($query) => $query->latest()->with('user'),
+        ]);
 
-        return view('eateries.show', compact('eatery'));
+        // for the Reviewer select in the review form
+        $users = User::orderBy('name')->get();
+
+        return view('eateries.show', compact('eatery', 'users'));
     }
 
     /**

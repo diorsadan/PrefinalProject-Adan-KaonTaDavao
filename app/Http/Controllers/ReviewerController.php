@@ -8,8 +8,10 @@ class ReviewerController extends Controller
 {
     public function show(User $user)
     {
-        $reviews = $user->reviews()->with('eatery')->latest()->get();
+        $user->load([
+            'reviews' => fn ($query) => $query->latest()->with('eatery'),
+        ]);
 
-        return view('reviewers.show', compact('user', 'reviews'));
+        return view('reviewers.show', compact('user'));
     }
 }

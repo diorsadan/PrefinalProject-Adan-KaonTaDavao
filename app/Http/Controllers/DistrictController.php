@@ -15,16 +15,16 @@ class DistrictController extends Controller
 
     public function show(District $district)
     {
-        // reviews count uses the hasManyThrough relationship
-        $district->loadCount(['eateries', 'reviews']);
+        $district->load([
+            'eateries' => fn ($query) => $query->with(['district', 'features'])
+                ->withCount('reviews')
+                ->withAvg('reviews', 'rating')
+                ->orderBy('name'),
+        ]);
 
-        $eateries = $district->eateries()
-            ->with(['district', 'features'])
-            ->withCount('reviews')
-            ->withAvg('reviews', 'rating')
-            ->orderBy('name')
-            ->get();
+        // counted through the hasManyThrough relationship (districts -> eateries -> reviews)
+        $district->loadCount('reviews');
 
-        return view('districts.show', compact('district', 'eateries'));
+        return view('districts.show', compact('district'));
     }
 }
